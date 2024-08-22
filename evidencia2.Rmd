@@ -1,0 +1,206 @@
+---
+title: "Evidencia 2 | Proyecto integrador"
+author: "Luis Alan Morales Castillo A01659147"
+date: "2024-03-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+El SARS-CoV-2, el virus responsable de la pandemia de COVID-19, ha dejado una huella devastadora en la salud pública a nivel global. Desde su aparición en Wuhan, China, a finales del 2019, se ha propagado a una velocidad alarmante por todo el planeta, causando millones de muertes y una profunda crisis sanitaria, económica y social. Para enfrentar este desafío, comprender la diversidad genética del SARS-CoV-2 y su distribución geográfica es crucial para el desarrollo de estrategias de control y prevención efectivas, así como para la búsqueda de tratamientos y vacunas específicas.
+En este trabajo, se presenta un análisis comparativo de secuencias del SARS-CoV-2 de 20 países altamente afectados por la pandemia. Este estudio, que analiza cepas registradas a finales del 2020, tiene como objetivo principal identificar patrones de variabilidad genética del virus en diferentes regiones del mundo y comprender cómo estas variaciones podrían estar relacionadas con la transmisión y mutación  
+Para ello, se analizarán las secuencias de ADN de las variantes del virus en los 20 países seleccionados, centrándose en la longitud de las secuencias, la composición de bases (adenina, timina, citosina y guanina) y las relaciones evolutivas entre ellas. Se espera observar si existen diferencias significativas en la diversidad genética del virus entre diferentes países, lo que podría tener implicaciones en la transmisión y el impacto de la enfermedad.
+Además, se agruparán las secuencias por región geográfica (Asia, América , Europa y África) para comparar sus características genéticas. Esto permitirá identificar si existen patrones de variabilidad genética de los virus asociados a diferentes grupos poblacionales, lo que podría estar relacionado con factores genéticos, ambientales o socioculturales.
+
+### PARTE 1 - Video
+<https://www.youtube.com/watch?v=b-aCZVhqAQI>
+
+
+### PARTE 2 - Código
+```{r}
+suppressPackageStartupMessages(library(Biostrings))
+suppressPackageStartupMessages(library(citation))
+suppressPackageStartupMessages(library(seqinr))
+suppressPackageStartupMessages(library(adegenet))
+suppressPackageStartupMessages(library(ape))
+suppressPackageStartupMessages(library(ggtree))
+suppressPackageStartupMessages(library(DECIPHER))
+suppressPackageStartupMessages(library(ggplot2))
+
+
+
+
+virus <- c("MW052620","MT844030","MT940449","MT890462","MW315209","MW023935","MT873892","MT890669","MT594401","MT994849","MT704816","MT470219","MW553295","MW127515","MT953878","MW981442","MT955161","OM643294","MT919768","MT670013")
+#virus_sequences1 <- ape::read.GenBank(virus)
+#write.dna(virus_sequences1,  file ="virus_seqs1.fasta", format = "fasta", append =FALSE, nbcol = 6, colsep = " ", colw = 10)
+viru_fasta<-read.fasta('virus_seqs1.fasta')
+titulos<-c("Estados Unidos","Brasil","India","Rusia","México","Perú","Reino Unido","Italia","Francia","Irán","Alemania","Colombia","Argentina","Polonia","España","Sudáfrica","Turquia","Rumania","Filipinas","Chile")
+```
+
+
+2. Calcula la longitud de las secuencias que incluyas
+
+```{r }
+for (i in 1:20) {
+  resultado <- length(viru_fasta[[i]])
+  cat("Longitud de la secuencia correspondiente a ", titulos[[i]], "es: ",resultado)
+  cat("\n")
+  }
+
+```
+
+
+
+3. Crea una sola gráfica donde se comparen el número de bases de ADN que componen todas las variantes del virus. 
+
+```{r }
+calcular_porcentaje_bases <- function(secuencia) {
+  x<-count(secuencia,1)
+  x<-(x/length(secuencia))*100
+  return(x)
+}
+
+par(mfrow = c(5, 4))
+par(mar = c(2, 2, 2, 2))
+for (i in 1:20) {
+  barplot(calcular_porcentaje_bases(viru_fasta[[i]]), col = 1:4, main = titulos[[i]])
+}
+```
+
+
+### Analisis
+
+Al observar los patrones en todos los países, destaca que las barras correspondientes a “a“ y “t “(negro y azul) son consistentemente más altas que las de c y g (rojo y verde). Esto indica que, en general, las composiciones de nucleótidos tienen una mayor abundancia de adenina y timina en comparación con citosina y guanina.  Otra observación interesante es que, si bien las barras de c (rojo) son generalmente las más bajas, las barras de g (verde) tienden a ser ligeramente más altas que las de c en la mayoría de los países. Esto sugiere que, si bien tanto c como g son los nucleótidos menos abundantes, la guanina típicamente se encuentra en mayores proporciones que la citosina, esto puede indicar preferencias en la estabilidad y funcionalidad de ciertas secuencias de ADN. La guanina tiene una estructura molecular única que puede estar asociada con funciones específicas, como la formación de estructuras secundarias de ADN, la regulación génica y la interacción con proteínas, además de la similitud en la composición de nucleótidos, las longitudes de las secuencias genéticas de estas variantes son prácticamente iguales, a pesar de las mutaciones que han dado lugar por zonas geograficas, el material genético del virus mantiene una estructura y tamaño muy conservados. Esto marca una pauta acerca del virus, que muestra una resistencia al cambio medioambiental, fuerte aunque no perfecta que hace su contagio muy esporádico y peligroso como lo ya visto en la pandemia global
+
+
+
+
+
+4. Agrega un análisis jerárquico global obtenido de las secuencias que se seleccionaron para estudiar.
+
+```{r, echo = TRUE, eval = TRUE, results = 'hide', message = FALSE,, warning = FALSE}
+virus_seq_not_align <- readDNAStringSet("virus_seqs1.fasta", format = "fasta")
+virus_seq_not_align <- OrientNucleotides(virus_seq_not_align)
+virus_seq_align <- AlignSeqs(virus_seq_not_align)
+#writeXStringSet(virus_seq_align, file="virus_seq_align1.fasta")
+virus_aligned <- read.alignment("virus_seq_align1.fasta", format = "fasta")
+matriz_distancia <- dist.alignment(virus_aligned, matrix = "similarity")
+virus_tree <- nj(matriz_distancia)
+
+```
+```{r}
+
+
+ggtree(virus_tree) +
+  geom_tiplab() +
+  ggtitle("Análisis jerárquico global del SARS-CoV-2 en los 20 países más afectados
+          (GenBank)") +
+  theme(plot.title = element_text(size = 12, face = "bold", hjust = 0.5))+
+  xlim(0, .028)
+
+
+
+```
+
+```{r}
+virus_tree$tip.label<-titulos
+ggtree(virus_tree) +
+  geom_tiplab() +
+  ggtitle("Análisis jerárquico global del SARS-CoV-2 en los 20 países más afectados
+          (Paises)") +
+  theme(plot.title = element_text(size = 12, face = "bold", hjust = 0.5))+
+  xlim(0, .028)
+```
+
+### Analisis
+El árbol filogenético presentado proporciona información valiosa sobre la distribución y la evolución del SARS-CoV-2 en los 20 países más afectados por la pandemia. Si bien no se observa una separación absoluta por continentes, el análisis revela algunas agrupaciones y patrones que podrían estar relacionados con factores geográficos, históricos y socioeconómicos.
+
+#### Agrupaciones Regionales:
+•	América: Se observa una relativa agrupación de países latinoamericanos, excluyendo a Estados Unidos, en la parte inferior del árbol. Difiriendo en parte solo por el ancestro comun mas cercano,e sto podría sugerir una mayor transmisión intracontinental debido a la cercanía geográfica, los patrones de movilidad y los intercambios comerciales.
+
+•	Europa: Exceptuando Rumania, los países europeos también muestran una agrupación por longitud de rama similar. Esto podría estar relacionado con la alta conectividad dentro del continente, los flujos migratorios y las estrategias de control del virus implementadas en la región.
+
+•	Asia: India y Filpinas, comparten la similitud de longitud mas estrecha en el arbol filogenetico, asi mismo, comparten un ancestro en comun donde el pais indu comparte una relacion mas estrecha con el mismo.
+
+
+
+#### Relaciones Inesperadas:
+•	Sudáfrica e Irán: Aunque ubicados en polos geográficos opuestos, Sudáfrica y Irán comparten una longitud de rama y un ancestro común similar. Esto podría estar relacionado con factores como los viajes internacionales, las relaciones comerciales o la similitud en las condiciones socioeconómicas que favorecieron la transmisión del virus.
+ 
+#### Factores a Considerar:
+•	Limitaciones del análisis: Es importante recordar que el árbol filogenético se basa en datos genéticos y no refleja todos los factores que han influido en la propagación del virus. Aspectos como las medidas de salud pública, los patrones de movilidad y las características socioeconómicas también juegan un papel importante.
+
+## Conclusiones
+El análisis comparativo de secuencias del SARS-CoV-2 en 20 países altamente afectados por la pandemia ha arrojado luz sobre la diversidad genética del virus y su distribución geográfica. Este estudio, que se basó en la aplicación de técnicas de bioinformática y análisis filogenético, ha permitido identificar patrones de variabilidad genética del virus en diferentes regiones del mundo y comprender cómo estas variaciones podrían estar relacionadas con la transmisión y mutación.
+
+Es importante destacar que este estudio tiene algunas limitaciones. El análisis se basa en un conjunto de datos limitado de 20 países y no refleja la diversidad genética global del virus. Además, la transmisión del virus también está influenciada por factores no genéticos, como la movilidad, las medidas de salud pública y las características socioeconómicas.
+A pesar de estas limitaciones, este estudio proporciona una valiosa contribución a la comprensión de la variabilidad del virus en el mundo. 
+
+
+
+
+
+## Referencias
+Lin, C. N., Chan, K. R., Ooi, E. E., Chiou, M. T., Hoang, M., Hsueh, P. R., & Ooi, P. T. (2021). Animal Coronavirus Diseases: Parallels with COVID-19 in Humans. Viruses, 13(8), 1507. <https://doi.org/10.3390/v13081507>
+
+Citation: Cui, S.; Liu, Y.; Zhao, J.; Peng, X.; Lu, G.; Shi, W.; Pan, Y.; Zhang, D.; Yang, P.; Wang, Q. An Updated Review on SARS-CoV-2 Infection in Animals. Viruses 2022, 14, 1527. <https://doi.org/10.3390/ v14071527>
+
+Ahmed I. Abulsoud, Hussein M. El-Husseiny, Ahmed A. El-Husseiny, Hesham A. El-Mahdy, Ahmed Ismail, Samy Y. Elkhawaga, Emad Gamil Khidr, Doaa Fathi, Eman A. Mady, Agnieszka Najda, Mohammad Algahtani, Abdulrahman Theyab, Khalaf F. Alsharif, Ashraf Albrakati, Roula Bayram, Mohamed M. Abdel-Daim, Ahmed S. Doghish,
+Mutations in SARS-CoV-2: Insights on structure, variants, vaccines, and biomedical interventions,
+Biomedicine & Pharmacotherapy,Volume 157,2023,113977,ISSN 0753-3322,
+<https://doi.org/10.1016/j.biopha.2022....>
+(<https://www.sciencedirect.com/science...>)
+
+
+BBC News Mundo. (2021, enero 27). Coronavirus: los gráficos que muestran el número de infectados y muertos en el mundo por covid-19. BBC News Mundo. <https://www.bbc.com/mundo/noticias-54347255>.
+
+NCBI virus. <https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/>.
+
+Pagès H, Aboyoun P, Gentleman R, DebRoy S (2024). _Biostrings: Efficient
+manipulation of biological strings_. R package version 2.70.3,
+<https://bioconductor.org/packages/Biostrings>.
+
+Charif, D. and Lobry, J.R. (2007)
+
+Jombart, T. (2008) adegenet: a R package for the multivariate analysis of genetic
+markers. Bioinformatics 24: 1403-1405. doi: 10.1093/bioinformatics/btn129
+
+Jombart T. and Ahmed I. (2011) adegenet 1.3-1: new tools for the analysis of
+genome-wide SNP data. Bioinformatics. doi: 10.1093/bioinformatics/btr521
+
+Paradis E, Schliep K (2019). “ape 5.0: an environment for modern phylogenetics and
+evolutionary analyses in R.” _Bioinformatics_, *35*, 526-528.
+doi:10.1093/bioinformatics/bty633 <https://doi.org/10.1093/bioinformatics/bty633>.
+
+Guangchuang Yu. (2022). Data Integration, Manipulation and Visualization of
+Phylogenetic Trees (1st edition). Chapman and Hall/CRC. doi:10.1201/9781003279242
+
+Shuangbin Xu, Lin Li, Xiao Luo, Meijun Chen, Wenli Tang, Li Zhan, Zehan Dai, Tommy
+T. Lam, Yi Guan, Guangchuang Yu. Ggtree: A serialized data object for
+visualization of a phylogenetic tree and annotation data. iMeta 2022, 4(1):e56.
+doi:10.1002/imt2.56
+
+Guangchuang Yu. Using ggtree to visualize data on tree-like structures. Current
+Protocols in Bioinformatics, 2020, 69:e96. doi: 10.1002/cpbi.96
+
+Guangchuang Yu, Tommy Tsan-Yuk Lam, Huachen Zhu, Yi Guan. Two methods for mapping
+and visualizing associated data on phylogeny using ggtree. Molecular Biology and
+Evolution 2018, 35(2):3041-3043. doi: 10.1093/molbev/msy194
+
+Guangchuang Yu, David Smith, Huachen Zhu, Yi Guan, Tommy Tsan-Yuk Lam. ggtree: an
+R package for visualization and annotation of phylogenetic trees with their
+covariates and other associated data. Methods in Ecology and Evolution 2017,
+8(1):28-36. doi:10.1111/2041-210X.12628
+
+Wright ES (2016). “Using DECIPHER v2.0 to Analyze Big Biological Sequence Data in
+R.” _The R Journal_, *8*(1), 352-359.
+
+H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York,
+2016.
+
+Dietrich J, Leoncio W (2023). _citation: Software Citation Tools_. R package
+version 0.8.2.
+
+
+
